@@ -1,164 +1,173 @@
 import React, { useState } from 'react';
 
-const FIFOPageReplacement = () => {
-    const [step, setStep] = useState(0);
-    const [numPages, setNumPages] = useState('');
-    const [pagesList, setPagesList] = useState('');
-    const [pageSeq, setPageSeq] = useState('');
-    const [numFrames, setNumFrames] = useState('');
-    const [error, setError] = useState('');
-    const [output, setOutput] = useState('');
-    const [frameList, setFrameList] = useState([]);
-    const [pageFault, setPageFault] = useState('');
+class Frame {
+    constructor(frameName) {
+        this.frameName = frameName;
+        this.frameSeq = [];
+    }
 
-    const handleNext = () => {
-        setError('');
-        switch (step) {
-            case 0:
-                const numPagesInt = parseInt(numPages);
-                if (isNaN(numPagesInt) || numPagesInt <= 0) {
-                    setError('Please enter a valid number of pages.');
-                    return;
-                }
-                setStep(step + 1);
-                break;
-            case 1:
-                const pagesArray = pagesList.split(' ').map(page => page.trim());
-                if (pagesArray.length !== parseInt(numPages)) {
-                    setError('Number of pages does not match the provided list.');
-                    return;
-                }
-                setStep(step + 1);
-                break;
-            case 2:
-                const sequenceArray = pageSeq.split(', ').map(page => page.trim());
-                setStep(step + 1);
-                startFIFO(sequenceArray);
-                break;
-            case 3:
-                const numFramesInt = parseInt(numFrames);
-                if (isNaN(numFramesInt) || numFramesInt <= 0) {
-                    setError('Please enter a valid number of frames.');
-                    return;
-                }
-                // Now you can perform FIFO page replacement algorithm with sequenceArray and numFramesInt
-                // Replace the console.log with your actual implementation
-                console.log('Starting FIFO Page Replacement with:', sequenceArray, 'and', numFramesInt, 'frames');
-                break;
-            default:
-                break;
+    getName() {
+        return this.frameName;
+    }
+
+    insertPage(page) {
+        this.frameSeq.push(page);
+    }
+
+    displayFrame() {
+        let temp = `${this.frameName}   `;
+        for (let frame of this.frameSeq) {
+            temp += `${frame} `;
         }
-    };
+        console.log(temp);
+    }
 
-    const startFIFO = (sequenceArray) => {
-        let faultCount = 0;
-        let successCount = 0;
-        let pageFaultStr = '';
+    peek() {
+        return this.frameSeq[this.frameSeq.length - 1];
+    }
 
-        const pageList = pagesList.split(' ').map(page => page.trim());
-        const numFramesInt = parseInt(numFrames);
-        const frames = Array.from({ length: numFramesInt }, () => []);
+    isEmpty() {
+        return this.frameSeq.length === 0;
+    }
+}
 
-        let isLeft = true;
+class Fifo {
+    constructor(pageSeq, pageList, frames) {
+        this.faultCount = 0;
+        this.successCount = 0;
+        this.pageSeq = [...pageSeq];
+        this.pageList = [...pageList];
+        this.frames = [...frames];
+        this.isLeft = true;
+        this.pageFault = "PF   ";
+    }
 
-        for (let i = 0; i < sequenceArray.length; i++) {
-            let currPage = sequenceArray[i];
+    startAlgo() {
+        const frame1 = this.frames[0];
+        const frame2 = this.frames[1];
 
-            let frame1 = frames[0];
-            let frame2 = frames[1];
+        for (let i = 0; i < this.pageSeq.length; i++) {
+            const currPage = this.pageSeq[i];
 
-            if (frame1.length === 0) {
-                frame1.push(currPage);
-                frame2.push(' ');
-
-                isLeft = false;
-
-                faultCount++;
-                pageFaultStr += '* ';
-            } else if (frame2[frame2.length - 1] === ' ') {
-                frame1.push(frame1[frame1.length - 1]);
-                frame2.push(currPage);
-
-                faultCount++;
-                pageFaultStr += '* ';
-            } else if (frame1.length !== 0 && frame2.length !== 0) {
-                if (frame1[frame1.length - 1] === currPage || frame2[frame2.length - 1] === currPage) {
-                    successCount++;
-                    pageFaultStr += '  ';
-                } else {
-                    if (frame1[frame1.length - 1] !== currPage) {
-                        frame1.push(currPage);
-                        frame2.push(frame2[frame2.length - 1]);
+            if (frame1.isEmpty()) {
+                frame1.insertPage(currPage);
+                frame2.insertPage(" ");
+                this.isLeft = false;
+                this.faultCount++;
+                this.pageFault += "* ";
+            } else if (frame2.peek() === " ") {
+                frame1.insertPage(frame1.peek());
+                frame2.insertPage(currPage);
+                this.isLeft = true;
+                this.faultCount++;
+                this.pageFault += "* ";
+            } else if (!frame1.isEmpty() && !frame2.isEmpty()) {
+                if (currPage === frame1.peek() || currPage === frame2.peek()) {
+                    if (currPage === frame1.peek()) {
+                        frame1.insertPage(currPage);
+                        frame2.insertPage(frame2.peek());
                     } else {
-                        frame1.push(frame1[frame1.length - 1]);
-                        frame2.push(currPage);
+                        frame1.insertPage(frame1.peek());
+                        frame2.insertPage(currPage);
                     }
-                    faultCount++;
-                    pageFaultStr += '* ';
+                    this.successCount++;
+                    this.pageFault += "  ";
+                } else {
+                    if (currPage !== frame1.peek() && this.isLeft) {
+                        frame1.insertPage(currPage);
+                        frame2.insertPage(frame2.peek());
+                        this.isLeft = false;
+                    } else {
+                        frame1.insertPage(frame1.peek());
+                        frame2.insertPage(currPage);
+                        this.isLeft = true;
+                    }
+                    this.faultCount++;
+                    this.pageFault += "* ";
                 }
             }
         }
+    }
 
-        setOutput({
-            frames: frames.map((frame, index) => `F${index + 1}: ${frame.join(' ')}`),
-            pageFaultStr: pageFaultStr,
-            successCount: successCount,
-            faultCount: faultCount
-        });
-    };
-
-    const renderInput = () => {
-        switch (step) {
-            case 0:
-                return (
-                    <label>
-                        Number of pages:
-                        <input type="number" value={numPages} onChange={(e) => setNumPages(e.target.value)} />
-                    </label>
-                );
-            case 1:
-                return (
-                    <label>
-                        List of pages (space-separated):
-                        <input type="text" value={pagesList} onChange={(e) => setPagesList(e.target.value)} />
-                    </label>
-                );
-            case 2:
-                return (
-                    <label>
-                        Page sequence (comma-separated):
-                        <input type="text" value={pageSeq} onChange={(e) => setPageSeq(e.target.value)} />
-                    </label>
-                );
-            case 3:
-                return (
-                    <label>
-                        Number of frames:
-                        <input type="number" value={numFrames} onChange={(e) => setNumFrames(e.target.value)} />
-                    </label>
-                );
-            default:
-                return null;
+    displayOutput() {
+        console.log("\nFIFO Output:\n");
+        let headers = "";
+        for (let pageHeader of this.pageSeq) {
+            headers += `${pageHeader} `;
         }
+        console.log(`     ${headers}`);
+
+        for (let frame of this.frames) {
+            frame.displayFrame();
+        }
+
+        console.log(this.pageFault);
+
+        const ps = parseFloat((this.successCount / this.pageSeq.length).toFixed(2));
+        const pf = parseFloat((this.faultCount / this.pageSeq.length).toFixed(2));
+
+        const pageSuccess = `\nPages Success \n\t= ${this.successCount}/${this.pageSeq.length}\n\t= ${ps}\n\t= ${(ps * 100).toFixed()}%`;
+        const pageFault = `\nPages Fault \n\t= ${this.faultCount}/${this.pageSeq.length}\n\t= ${pf}\n\t= ${(pf * 100).toFixed()}%`;
+
+        console.log(pageSuccess + "\n" + pageFault);
+    }
+}
+
+const FIFOPageReplacement = () => {
+    const [pages, setPages] = useState(0);
+    const [frames, setFrames] = useState(0);
+    const [pageList, setPageList] = useState([]);
+    const [pageSeq, setPageSeq] = useState([]);
+    const [output, setOutput] = useState('');
+
+    const runAlgorithm = () => {
+        // Convert pageList and pageSeq to arrays of strings
+        const pageListArray = pageList.split(' ');
+        const pageSeqArray = pageSeq.split(', ');
+
+        // Initialize frames
+        const frameList = [];
+        for (let i = 0; i < frames; i++) {
+            frameList.push(new Frame(`F${i + 1}`));
+        }
+
+        // FIFO algorithm logic
+        const fifo = new Fifo(pageSeqArray, pageListArray, frameList);
+        fifo.startAlgo();
+        const outputText = fifo.displayOutput();
+        setOutput(outputText);
     };
 
     return (
         <div>
             <h2>FIFO Page Replacement Algorithm</h2>
             <p>Explanation of FIFO Page Replacement Algorithm...</p>
-            {renderInput()}
+            <label>
+                How many pages? 
+                <input type="number" value={pages} onChange={(e) => setPages(parseInt(e.target.value))} />
+            </label>
             <br />
-            <button onClick={handleNext}>{step === 3 ? 'Start' : 'Next'}</button>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            {output.frames && (
-                <div>
-                    <h3>Output:</h3>
-                    <p>{output.frames.join('\n')}</p>
-                    <p>Page Faults: {output.pageFaultStr}</p>
-                    <p>Pages Success: {output.successCount}/{pageSeq.length} ({((output.successCount / pageSeq.length) * 100).toFixed(2)}%)</p>
-                    <p>Pages Fault: {output.faultCount}/{pageSeq.length} ({((output.faultCount / pageSeq.length) * 100).toFixed(2)}%)</p>
-                </div>
-            )}
+            <label>
+                List of the {pages} pages? 
+                <input type="text" value={pageList} onChange={(e) => setPageList(e.target.value)} />
+            </label>
+            <br />
+            <label>
+                Enter the page sequence: 
+                <input type="text" value={pageSeq} onChange={(e) => setPageSeq(e.target.value)} />
+            </label>
+            <br />
+            <label>
+                How many frames? 
+                <input type="number" value={frames} onChange={(e) => setFrames(parseInt(e.target.value))} />
+            </label>
+            <br />
+            <button onClick={runAlgorithm}>Run Algorithm</button>
+            <br />
+            <div>
+                <h3>Output:</h3>
+                <pre>{output}</pre>
+            </div>
         </div>
     );
 };
