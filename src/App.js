@@ -1,3 +1,4 @@
+import 'bootstrap/dist/css/bootstrap.min.css';
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import FixedPartition from './Component/FixedPartition';
@@ -11,15 +12,25 @@ const App = () => {
     return (
         <Router>
             <div className="App">
-                <nav>
-                    <ul>
-                        <li><Link to="/fixed-partition">Fixed Partition</Link></li>
-                        <li><Link to="/fifo-page-replacement">FIFO Page Replacement</Link></li>
-                        <li><Link to="/fcfs-scheduling">FCFS Scheduling</Link></li>
-                        <li><Link to="/processor-management">Processor Management</Link></li>
-                        <li><Link to="/bankers-algorithm">Banker's Algorithm</Link></li>
+                <div className="container d-flex flex-column justify-content-center align-items-center">
+                    <ul className="navbar-nav">
+                        <li className="nav-item m-2">
+                            <Link to="/fixed-partition" className="btn btn-primary">Fixed Partition</Link>
+                        </li>
+                        <li className="nav-item m-2">
+                            <Link to="/fifo-page-replacement" className="btn btn-secondary">FIFO Page Replacement</Link>
+                        </li>
+                        <li className="nav-item m-2">
+                            <Link to="/fcfs-scheduling" className="btn btn-success">FCFS Scheduling</Link>
+                        </li>
+                        <li className="nav-item m-2">
+                            <Link to="/processor-management" className="btn btn-danger">Processor Management</Link>
+                        </li>
+                        <li className="nav-item m-2">
+                            <Link to="/bankers-algorithm" className="btn btn-warning">Banker's Algorithm</Link>
+                        </li>
                     </ul>
-                </nav>
+                </div>
                 <Routes>
                     <Route path="/fixed-partition" element={<FixedPartition />} />
                     <Route path="/fifo-page-replacement" element={<FIFOPageReplacement />} />
