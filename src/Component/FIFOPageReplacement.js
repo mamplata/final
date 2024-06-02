@@ -90,18 +90,22 @@ class Fifo {
     }
 
     displayOutput() {
-        console.log("\nFIFO Output:\n");
+        let output = "\nFIFO Output:\n";
         let headers = "";
         for (let pageHeader of this.pageSeq) {
             headers += `${pageHeader} `;
         }
-        console.log(`     ${headers}`);
+        output += `     ${headers}\n`;
 
         for (let frame of this.frames) {
-            frame.displayFrame();
+            let frameString = '';
+            for (let page of frame.frameSeq) {
+                frameString += `${page} `;
+            }
+            output += `${frame.frameName}   ${frameString}\n`;
         }
 
-        console.log(this.pageFault);
+        output += `${this.pageFault}\n`;
 
         const ps = parseFloat((this.successCount / this.pageSeq.length).toFixed(2));
         const pf = parseFloat((this.faultCount / this.pageSeq.length).toFixed(2));
@@ -109,7 +113,9 @@ class Fifo {
         const pageSuccess = `\nPages Success \n\t= ${this.successCount}/${this.pageSeq.length}\n\t= ${ps}\n\t= ${(ps * 100).toFixed()}%`;
         const pageFault = `\nPages Fault \n\t= ${this.faultCount}/${this.pageSeq.length}\n\t= ${pf}\n\t= ${(pf * 100).toFixed()}%`;
 
-        console.log(pageSuccess + "\n" + pageFault);
+        output += pageSuccess + "\n" + pageFault;
+        
+        return output;
     }
 }
 
